@@ -143,7 +143,57 @@ public class NetworkDetailsCalculator {
 
         return (int) Math.pow(2, 32 - prefix) - 2;
 
-    }    
+    }  
+    
+    
+    private static int calcSubnetQuantity(int prefix) {
+
+        return (int) Math.pow(2, prefix);
+
+    }
+
+
+    private static void allocateSubnets(int numSubnets, int subnetPrefix, String hosIP) {
+        int subnetMask = calcSubnetMask(subnetPrefix);
+        InetAddress networkAddress;
+        try {
+            networkAddress = calcNetworkAdress(InetAddress.getByName(hosIP), subnetMask);
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+            return;
+        }
+    
+        for (int i = 0; i < numSubnets; i++) {
+            int subnetSize = calcSubnetQuantity(subnetPrefix);
+            int hostQuantity = calcHostQuantityAddress(subnetPrefix);
+
+            InetAddress firstAddress = calcFirstAddress(networkAddress);
+            InetAddress lastAddress = calcLastAdress(calcBroadcastAddress(networkAddress, subnetMask));
+            InetAddress broadcastAddress = calcBroadcastAddress(networkAddress, subnetMask);
+    
+            try {
+                
+    
+                System.out.println("Subnet " + i + ":");
+                System.out.println("Subnet Mask: " + getDottedDecSubMask(subnetMask));
+                System.out.println("Network Address: " + networkAddress.getHostAddress());
+                System.out.println("First Usable Address: " + firstAddress.getHostAddress());
+                System.out.println("Last Usable Address: " + lastAddress.getHostAddress());
+                System.out.println("Broadcast Address: " + calcBroadcastAddress(networkAddress, subnetMask).getHostAddress());
+                System.out.println("Number of Usable Host Addresses: " + (subnetSize - 2));
+                System.out.println();
+               
+
+                // апдейтим адресс сети для следующего subneta
+                networkAddress = InetAddress.getByAddress(calcLastAdress(broadcastAddress).getAddress());
+                
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 
     
 
@@ -152,6 +202,8 @@ public class NetworkDetailsCalculator {
 
         // String ipHost = "192.168.62.120";
         // int subnetPrefix = 30;
+
+        // 86.239.128.0
 
 
         Scanner scanner = new Scanner(System.in);
@@ -166,48 +218,66 @@ public class NetworkDetailsCalculator {
 
 
         while (!validPrefix) {
+            int numSubnets = 0;
             if (subnetPrefix < 0 || subnetPrefix > 30) {
                 System.out.println("Invalid prefix, try again: ");
                 subnetPrefix = scanner.nextInt();
             } else {
                 validPrefix = true;
             }
+     
         }
 
-        scanner.close();
-        
 
-        int subnetMask = calcSubnetMask(subnetPrefix);
-        InetAddress networkAddress = null;
-        InetAddress hostAddress = null;
-        InetAddress firstAddress = null;
-        InetAddress broadcastAddress = null;
-        InetAddress lastAddress = null;
-        int hostQuantity = calcHostQuantityAddress(subnetPrefix);
-        
+        System.out.println("Do u want to subnet the network? (y/n): ");
+        String answer = scanner.next();
+
+        if (answer.equalsIgnoreCase("y")) {
+            System.out.println("Enter the number of subnets:");
+            int numSubnets = scanner.nextInt();
+            allocateSubnets(numSubnets, subnetPrefix, ipHost);
+
+            
+        } else {
+            
+
+            int subnetMask = calcSubnetMask(subnetPrefix);
+            InetAddress networkAddress = null;
+            InetAddress hostAddress = null;
+            InetAddress firstAddress = null;
+            InetAddress broadcastAddress = null;
+            InetAddress lastAddress = null;
+            int hostQuantity = calcHostQuantityAddress(subnetPrefix);
+            
+            
 
 
-        try {
-            networkAddress = calcNetworkAdress(InetAddress.getByName(ipHost), subnetMask);
-            hostAddress = InetAddress.getByName(ipHost);
-            firstAddress = calcFirstAddress(networkAddress);
-            broadcastAddress = calcBroadcastAddress(networkAddress, subnetMask);
-            lastAddress = calcLastAdress(broadcastAddress);
+            try {
+                networkAddress = calcNetworkAdress(InetAddress.getByName(ipHost), subnetMask);
+                hostAddress = InetAddress.getByName(ipHost);
+                firstAddress = calcFirstAddress(networkAddress);
+                broadcastAddress = calcBroadcastAddress(networkAddress, subnetMask);
+                lastAddress = calcLastAdress(broadcastAddress);
 
-          
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
+            
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            }
+
+            
+            System.out.println("Subnet mask: " + getDottedDecSubMask(subnetMask));
+            System.out.println("Network adress: " + networkAddress.getHostAddress());
+            System.out.println("First adress: " + firstAddress.getHostAddress());
+            System.out.println("Broadcast adress: " + broadcastAddress.getHostAddress());
+            System.out.println("Last adress: " + lastAddress.getHostAddress());
+            System.out.println("Host quantity: " + hostQuantity);
+            
+            scanner.close();
+
         }
 
         
-        System.out.println("Subnet mask: " + getDottedDecSubMask(subnetMask));
-        System.out.println("Network adress: " + networkAddress.getHostAddress());
-        System.out.println("First adress: " + firstAddress.getHostAddress());
-        System.out.println("Broadcast adress: " + broadcastAddress.getHostAddress());
-        System.out.println("Last adress: " + lastAddress.getHostAddress());
-        System.out.println("Host quantity: " + hostQuantity);
-        
-        
+      
         
 
     }
